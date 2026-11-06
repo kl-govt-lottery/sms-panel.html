@@ -22,183 +22,183 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <!-- LOGIN -->
-    <div id="login" class="card">
-        <h1>KUNDAN SMS PANEL</h1>
-        <h3>Admin Login</h3>
-        <input id="username" placeholder="Username">
-        <input id="password" type="password" placeholder="Password">
-        <button onclick="loginUser()">Login</button>
-        <p id="error" style="color:#ff7777"></p>
-        <p class="small">Demo login: admin / admin123</p>
+    <div class="container">
+        <!-- LOGIN -->
+        <div id="login" class="card">
+            <h1>KUNDAN SMS PANEL</h1>
+            <h3>Admin Login</h3>
+            <input id="username" placeholder="Username">
+            <input id="password" type="password" placeholder="Password">
+            <button onclick="loginUser()">Login</button>
+            <p id="error" style="color:#ff7777"></p>
+            <p class="small">Demo login: admin / admin123</p>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="hidden">
+            <h1>KUNDAN SMS PANEL</h1>
+            <div class="stats">
+                <div class="stat">Total SMS<h2 id="total">0</h2></div>
+                <div class="stat">History<h2 id="historyCount">0</h2></div>
+                <div class="stat">Sender ID<h3>KUNDAN</h3></div>
+            </div>
+
+            <div class="card">
+                <h3>Send SMS</h3>
+                <label>Sender ID</label>
+                <input value="KUNDAN" readonly>
+                <label>SMS Type</label>
+                <select id="type" onchange="changeType()">
+                    <option value="single">Single SMS</option>
+                    <option value="bulk">Bulk SMS</option>
+                </select>
+                <div id="singleBox">
+                    <label>Mobile Number</label>
+                    <input id="mobile" placeholder="10 digit mobile number" maxlength="10">
+                </div>
+                <div id="bulkBox" class="hidden">
+                    <label>Mobile Numbers (one per line)</label>
+                    <textarea id="numbers" rows="5" placeholder="9876543210&#10;9876543211"></textarea>
+                </div>
+                <label>Message</label>
+                <textarea id="message" rows="4" placeholder="Write your message"></textarea>
+                <button onclick="sendRealSMS()">Send SMS via Phone</button>
+                <p id="status" class="small"></p>
+            </div>
+
+            <div class="card">
+                <h3>SMS History</h3>
+                <button class="secondary" onclick="downloadCSV()">Download History</button>
+                <button class="secondary" onclick="clearHistory()">Clear History</button>
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Number</th>
+                                <th>Message</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history"></tbody>
+                    </table>
+                </div>
+            </div>
+            <button class="secondary" onclick="logout()">Logout</button>
+        </div>
     </div>
 
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="hidden">
-        <h1>KUNDAN SMS PANEL</h1>
-        <div class="stats">
-            <div class="stat">Total SMS<h2 id="total">0</h2></div>
-            <div class="stat">History<h2 id="historyCount">0</h2></div>
-            <div class="stat">Sender ID<h3>KUNDAN</h3></div>
-        </div>
+    <script>
+        let records = JSON.parse(localStorage.getItem("kundan_sms_history") || "[]");
 
-        <div class="card">
-            <h3>Send SMS</h3>
-            <label>Sender ID</label>
-            <input value="KUNDAN" readonly>
-            <label>SMS Type</label>
-            <select id="type" onchange="changeType()">
-                <option value="single">Single SMS</option>
-                <option value="bulk">Bulk SMS</option>
-            </select>
-            <div id="singleBox">
-                <label>Mobile Number</label>
-                <input id="mobile" placeholder="10 digit mobile number" maxlength="10">
-            </div>
-            <div id="bulkBox" class="hidden">
-                <label>Mobile Numbers (one per line)</label>
-                <textarea id="numbers" rows="5" placeholder="9876543210&#10;9876543211"></textarea>
-            </div>
-            <label>Message</label>
-            <textarea id="message" rows="4" placeholder="Write your message"></textarea>
-            <button onclick="sendRealSMS()">Send SMS</button>
-            <p id="status" class="small"></p>
-        </div>
-
-        <div class="card">
-            <h3>SMS History</h3>
-            <button class="secondary" onclick="downloadCSV()">Download History</button>
-            <button class="secondary" onclick="clearHistory()">Clear History</button>
-            <div style="overflow-x:auto">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Number</th>
-                            <th>Message</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history"></tbody>
-                </table>
-            </div>
-        </div>
-        <button class="secondary" onclick="logout()">Logout</button>
-    </div>
-</div>
-
-<script>
-let records = JSON.parse(localStorage.getItem("kundan_sms_history") || "[]");
-
-function loginUser(){
-    const u = document.getElementById("username").value;
-    const p = document.getElementById("password").value;
-    if(u === "admin" && p === "admin123"){
-        document.getElementById("login").classList.add("hidden");
-        document.getElementById("dashboard").classList.remove("hidden");
-        render();
-    } else {
-        document.getElementById("error").innerText = "Wrong username or password";
-    }
-}
-
-function logout(){
-    document.getElementById("dashboard").classList.add("hidden");
-    document.getElementById("login").classList.remove("hidden");
-}
-
-function changeType(){
-    const type = document.getElementById("type").value;
-    document.getElementById("singleBox").classList.toggle("hidden", type === "bulk");
-    document.getElementById("bulkBox").classList.toggle("hidden", type === "single");
-}
-
-async function sendRealSMS() {
-    const type = document.getElementById("type").value;
-    const message = document.getElementById("message").value.trim();
-    if (!message) { alert("Please enter a message"); return; }
-
-    let nums = [];
-    if (type === "single") {
-        let n = document.getElementById("mobile").value.trim();
-        if (!/^[6-9][0-9]{9}$/.test(n)) { alert("Enter a valid Indian mobile number"); return; }
-        nums = [n];
-    } else {
-        nums = document.getElementById("numbers").value.split(/\s+/).filter(Boolean);
-        if (nums.length === 0 || nums.some(n => !/^[6-9][0-9]{9}$/.test(n))) { 
-            alert("Check mobile numbers"); 
-            return; 
+        function loginUser(){
+            const u = document.getElementById("username").value;
+            const p = document.getElementById("password").value;
+            if(u === "admin" && p === "admin123"){
+                document.getElementById("login").classList.add("hidden");
+                document.getElementById("dashboard").classList.remove("hidden");
+                render();
+            } else {
+                document.getElementById("error").innerText = "Wrong username or password";
+            }
         }
-    }
 
-    document.getElementById("status").innerText = "Sending SMS...";
+        function logout(){
+            document.getElementById("dashboard").classList.add("hidden");
+            document.getElementById("login").classList.remove("hidden");
+        }
 
-    for (let n of nums) {
-        try {
-            let response = await fetch('http://127.0.0.1:3000', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mobile: n, message: message })
-            });
-            let result = await response.json();
+        function changeType(){
+            const type = document.getElementById("type").value;
+            document.getElementById("singleBox").classList.toggle("hidden", type === "bulk");
+            document.getElementById("bulkBox").classList.toggle("hidden", type === "single");
+        }
+
+        function sendRealSMS() {
+            const type = document.getElementById("type").value;
+            const message = document.getElementById("message").value.trim();
+            if (!message) {
+                alert("Please enter a message");
+                return;
+            }
+
+            let nums = [];
+            if (type === "single") {
+                let n = document.getElementById("mobile").value.trim();
+                if (!/^[6-9][0-9]{9}$/.test(n)) {
+                    alert("Enter a valid Indian mobile number");
+                    return;
+                }
+                nums = [n];
+            } else {
+                nums = document.getElementById("numbers").value.split(/\s+/).filter(Boolean);
+                if (nums.length === 0 || nums.some(n => !/^[6-9][0-9]{9}$/.test(n))) {
+                    alert("Check mobile numbers");
+                    return;
+                }
+            }
+
+            document.getElementById("status").innerText = "Opening SMS application...";
+
+            // Phone ke default SMS app par redirect karne ke liye
+            let targetNumber = nums[0]; // Pehle number par redirect karega
             
-            let statusText = result.success ? "Sent Successfully" : "Failed: " + (result.message || "Error");
-            records.unshift({ number: n, message: message, status: statusText, date: new Date().toLocaleString() });
-        } catch (err) {
-            records.unshift({ number: n, message: message, status: "Network Error", date: new Date().toLocaleString() });
+            records.unshift({
+                number: targetNumber,
+                message: message,
+                status: "Redirected to Phone SMS",
+                date: new Date().toLocaleString()
+            });
+
+            localStorage.setItem("kundan_sms_history", JSON.stringify(records));
+            document.getElementById("status").innerText = "Done! Opening messaging app...";
+            
+            setTimeout(() => {
+                window.location.href = `sms:${targetNumber}?body=${encodeURIComponent(message)}`;
+            }, 500);
+
+            render();
         }
-    }
 
-    localStorage.setItem("kundan_sms_history", JSON.stringify(records));
-    document.getElementById("status").innerText = "Process completed.";
-    document.getElementById("message").value = "";
-    if(type === "single") document.getElementById("mobile").value = "";
-    else document.getElementById("numbers").value = "";
-    render();
-}
+        function render(){
+            document.getElementById("total").innerText = records.length;
+            document.getElementById("historyCount").innerText = records.length;
+            document.getElementById("history").innerHTML = records.map(r => `
+                <tr>
+                    <td>${escapeHTML(r.number)}</td>
+                    <td>${escapeHTML(r.message)}</td>
+                    <td>${escapeHTML(r.status)}</td>
+                    <td>${escapeHTML(r.date)}</td>
+                </tr>
+            `).join("");
+        }
 
-function render(){
-    document.getElementById("total").innerText = records.length;
-    document.getElementById("historyCount").innerText = records.length;
-    document.getElementById("history").innerHTML = records.map(r => `
-        <tr>
-            <td>${escapeHTML(r.number)}</td>
-            <td>${escapeHTML(r.message)}</td>
-            <td>${escapeHTML(r.status)}</td>
-            <td>${escapeHTML(r.date)}</td>
-        </tr>
-    `).join("");
-}
+        function escapeHTML(s){
+            return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
 
-function escapeHTML(s){
-    return String(s).replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[c]));
-}
+        function downloadCSV(){
+            let csv = "Number,Message,Status,Date\n";
+            records.forEach(r => {
+                csv += [r.number, r.message, r.status, r.date]
+                    .map(v => '"' + String(v).replace(/"/g, '""') + '"')
+                    .join(",") + "\n";
+            });
+            let blob = new Blob([csv], {type: "text/csv"});
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "kundan_sms_history.csv";
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
 
-function downloadCSV(){
-    let csv = "Number,Message,Status,Date\n";
-    records.forEach(r => {
-        csv += [r.number, r.message, r.status, r.date]
-            .map(v => '"' + String(v).replace(/"/g, '""') + '"')
-            .join(",") + "\n";
-    });
-    let blob = new Blob([csv], {type: "text/csv"});
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "kundan_sms_history.csv";
-    a.click();
-    URL.revokeObjectURL(a.href);
-}
-
-function clearHistory(){
-    if(confirm("Delete all history?")){
-        records = [];
-        localStorage.removeItem("kundan_sms_history");
-        render();
-    }
-}
-</script>
+        function clearHistory(){
+            if(confirm("Delete all history?")){
+                records = [];
+                localStorage.removeItem("kundan_sms_history");
+                render();
+            }
+        }
+    </script>
 </body>
 </html>
