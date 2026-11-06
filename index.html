@@ -40,29 +40,34 @@
             <div class="stats">
                 <div class="stat">Total SMS<h2 id="total">0</h2></div>
                 <div class="stat">History<h2 id="historyCount">0</h2></div>
-                <div class="stat">Sender ID<h3>KUNDAN</h3></div>
+                <div class="stat">Sender ID<h3>KL-LOTTERY</h3></div>
             </div>
 
             <div class="card">
                 <h3>Send SMS</h3>
-                <label>Sender ID</label>
-                <input value="KUNDAN" readonly>
+                <label>Sender ID Name</label>
+                <input id="senderIdInput" value="KL-LOTTERY" placeholder="e.g. KL-LOTTERY or KUNDAN">
+                
                 <label>SMS Type</label>
                 <select id="type" onchange="changeType()">
                     <option value="single">Single SMS</option>
                     <option value="bulk">Bulk SMS</option>
                 </select>
+
                 <div id="singleBox">
                     <label>Mobile Number</label>
                     <input id="mobile" placeholder="10 digit mobile number" maxlength="10">
                 </div>
+
                 <div id="bulkBox" class="hidden">
                     <label>Mobile Numbers (one per line)</label>
                     <textarea id="numbers" rows="5" placeholder="9876543210&#10;9876543211"></textarea>
                 </div>
+
                 <label>Message</label>
                 <textarea id="message" rows="4" placeholder="Write your message"></textarea>
-                <button onclick="sendRealSMS()">Send SMS via Phone</button>
+                
+                <button onclick="sendRealSMS()">Send SMS via API</button>
                 <p id="status" class="small"></p>
             </div>
 
@@ -114,9 +119,11 @@
             document.getElementById("bulkBox").classList.toggle("hidden", type === "single");
         }
 
-        function sendRealSMS() {
+        async function sendRealSMS() {
             const type = document.getElementById("type").value;
             const message = document.getElementById("message").value.trim();
+            const senderId = document.getElementById("senderIdInput").value.trim() || "KL-LOTTERY";
+            
             if (!message) {
                 alert("Please enter a message");
                 return;
@@ -138,26 +145,46 @@
                 }
             }
 
-            document.getElementById("status").innerText = "Opening SMS application...";
+            document.getElementById("status").innerText = "Sending SMS via API...";
 
-            // Phone ke default SMS app par redirect karne ke liye
-            let targetNumber = nums[0]; // Pehle number par redirect karega
-            
-            records.unshift({
-                number: targetNumber,
-                message: message,
-                status: "Redirected to Phone SMS",
-                date: new Date().toLocaleString()
-            });
+            try {
+                // Aapka API endpoint URL yahan aayega (jo aapka SMS provider deta hai)
+                const response = await fetch("https://api.your-sms-provider.com/send", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer IsvmYgDlzHWWAkLDI8p7i4SbVIVPdH37yn272j7GdHluzgWyljjnVV4IHsZX57VLscW7nCsyhwVIotMT"
+                    },
+                    body: JSON.stringify({
+                        sender_id: senderId,
+                        numbers: nums,
+                        message: message
+                    })
+                });
 
-            localStorage.setItem("kundan_sms_history", JSON.stringify(records));
-            document.getElementById("status").innerText = "Done! Opening messaging app...";
-            
-            setTimeout(() => {
-                window.location.href = `sms:${targetNumber}?body=${encodeURIComponent(message)}`;
-            }, 500);
+                if (response.ok) {
+                    document.getElementById("status").innerText = "SMS sent successfully with ID: " + senderId;
+                    
+                    nums.forEach(targetNumber => {
+                        records.unshift({
+                            number: targetNumber,
+                            message: message,
+                            status: "Sent via API (" + senderId + ")",
+                            date: new Date().toLocaleString()
+                        });
+                    });
 
-            render();
+                    localStorage.setItem("kundan_smith_history", JSON.stringify(records));
+                    render();
+                } else {
+                    alert("API request failed. Please check your SMS gateway URL.");
+                    document.getElementById("status").innerText = "Failed";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Network or API connection error.");
+                document.getElementById("status").innerText = "";
+            }
         }
 
         function render(){
@@ -174,7 +201,9 @@
         }
 
         function escapeHTML(s){
-            return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+            return String(s).replace(/[&<>"']/g, c => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[c]));
         }
 
         function downloadCSV(){
