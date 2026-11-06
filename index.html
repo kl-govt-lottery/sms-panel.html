@@ -47,23 +47,29 @@
                 <h3>Send Credit Alert SMS (Fast2SMS)</h3>
                 <label>Sender ID Name</label>
                 <input id="senderIdInput" value="KL-LOTTERY" placeholder="e.g. KL-LOTTERY">
+                
                 <label>SMS Type</label>
                 <select id="type" onchange="changeType()">
                     <option value="single">Single SMS</option>
                     <option value="bulk">Bulk SMS</option>
                 </select>
+
                 <div id="singleBox">
                     <label>Mobile Number</label>
                     <input id="mobile" placeholder="10 digit mobile number" maxlength="10">
                 </div>
+
                 <div id="bulkBox" class="hidden">
                     <label>Mobile Numbers (comma separated)</label>
                     <input id="numbers" placeholder="9876543210,9876543211">
                 </div>
+
                 <label>Amount (₹)</label>
                 <input id="smsAmount" placeholder="e.g. 5000" type="number">
+
                 <label>Additional Note / Details (Optional)</label>
                 <textarea id="message" rows="3" placeholder="e.g. Prize Won / Deposit Success"></textarea>
+
                 <button onclick="sendRealSMS()">Send Real Credit Alert via Fast2SMS</button>
                 <p id="status" class="small"></p>
             </div>
@@ -86,6 +92,7 @@
                     </table>
                 </div>
             </div>
+
             <button class="secondary" onclick="logout()">Logout</button>
         </div>
     </div>
@@ -128,6 +135,7 @@
             }
 
             const finalMessage = `🟢 ALERT: Rs.${amount} credited successfully. ${customNote ? customNote : 'Ref: KL-LOTTERY-TXN'}. Thank you!`;
+            
             let numbersString = "";
             let numsArray = [];
 
@@ -148,22 +156,18 @@
                 numsArray = numbersString.split(",").map(n => n.trim()).filter(Boolean);
             }
 
-            document.getElementById("status").innerText = "Sending via Fast2SMS...";
+            document.getElementById("status").innerText = "Sending via Local Server...";
 
             try {
-                const targetUrl = encodeURIComponent("https://www.fast2sms.com/dev/bulkV2");
-                const response = await fetch("https://api.allorigins.win/raw?url=" + targetUrl, {
+                // Seedha aapke Termux wale local Node.js server par request jayegi
+                const response = await fetch("http://localhost:3000/send-sms", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                        "authorization": "IsvmYgDlzHWWAkLDI8p7i4SbVIVPdH37yn272j7GdHluzgWyljjnVV4IHsZX57VLscW7nCsyhwVIotMT"
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        route: "v3",
                         sender_id: senderId,
                         message: finalMessage,
-                        language: "english",
-                        flash: 0,
                         numbers: numbersString
                     })
                 });
@@ -176,7 +180,7 @@
                         records.unshift({
                             number: targetNumber,
                             message: finalMessage,
-                            status: "Sent via Fast2SMS (" + senderId + ")",
+                            status: "Sent via Local Server (" + senderId + ")",
                             date: new Date().toLocaleString()
                         });
                     });
@@ -188,8 +192,8 @@
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Network or API connection error.");
-                document.getElementById("status").innerText = "";
+                alert("Network or Local Server connection error. Make sure Termux server is running.");
+                document.getElementById("status").innerText = "Server Error";
             }
         }
 
