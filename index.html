@@ -151,9 +151,8 @@
             document.getElementById("status").innerText = "Sending via Fast2SMS...";
 
             try {
-                // CORS बाईपास प्रॉक्सी के साथ API कॉल
                 const targetUrl = encodeURIComponent("https://www.fast2sms.com/dev/bulkV2");
-                const response = await fetch("https://corsproxy.io/?url=" + targetUrl, {
+                const response = await fetch("https://api.allorigins.win/raw?url=" + targetUrl, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
