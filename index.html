@@ -40,13 +40,13 @@
             <div class="stats">
                 <div class="stat">Total SMS<h2 id="total">0</h2></div>
                 <div class="stat">History<h2 id="historyCount">0</h2></div>
-                <div class="stat">Sender ID<h3>KL-LOTTERY</h3></div>
+                <div class="stat">Sender ID<h3 style="font-size: 16px;">Kerala Lottery</h3></div>
             </div>
 
             <div class="card">
                 <h3>Send Credit Alert SMS (Fast2SMS)</h3>
                 <label>Sender ID Name</label>
-                <input id="senderIdInput" value="KL-LOTTERY" placeholder="e.g. KL-LOTTERY">
+                <input id="senderIdInput" value="Kerala Lottery" placeholder="e.g. Kerala Lottery">
 
                 <label>SMS Type</label>
                 <select id="type" onchange="changeType()">
@@ -127,15 +127,14 @@
             const type = document.getElementById("type").value;
             const amount = document.getElementById("smsAmount").value.trim();
             const customNote = document.getElementById("message").value.trim();
-            const senderId = document.getElementById("senderIdInput").value.trim() || "KL-LOTTERY";
+            const senderId = document.getElementById("senderIdInput").value.trim() || "Kerala Lottery";
 
             if (!amount) {
                 alert("Please enter the amount");
                 return;
             }
 
-            // Agar customNote likha hai toh wahi jayega, warna default format use hoga
-            const finalMessage = customNote ? customNote : `🟢 ALERT: Rs.${amount} credited successfully. Ref: KL-LOTTERY-TXN. Thank you!`;
+            const finalMessage = customNote ? customNote : `🟢 ALERT: Rs.${amount} credited successfully. Ref: Kerala Lottery-TXN. Thank you!`;
 
             let numbersString = "";
             let numsArray = [];
