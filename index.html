@@ -47,7 +47,7 @@
                 <h3>Send Credit Alert SMS (Fast2SMS)</h3>
                 <label>Sender ID Name</label>
                 <input id="senderIdInput" value="KL-LOTTERY" placeholder="e.g. KL-LOTTERY">
-                
+
                 <label>SMS Type</label>
                 <select id="type" onchange="changeType()">
                     <option value="single">Single SMS</option>
@@ -134,8 +134,9 @@
                 return;
             }
 
-            const finalMessage = `🟢 ALERT: Rs.${amount} credited successfully. ${customNote ? customNote : 'Ref: KL-LOTTERY-TXN'}. Thank you!`;
-            
+            // Agar customNote likha hai toh wahi jayega, warna default format use hoga
+            const finalMessage = customNote ? customNote : `🟢 ALERT: Rs.${amount} credited successfully. Ref: KL-LOTTERY-TXN. Thank you!`;
+
             let numbersString = "";
             let numsArray = [];
 
@@ -159,12 +160,9 @@
             document.getElementById("status").innerText = "Sending via Local Server...";
 
             try {
-                // Seedha aapke Termux wale local Node.js server par request jayegi
                 const response = await fetch("http://localhost:3000/send-sms", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         sender_id: senderId,
                         message: finalMessage,
