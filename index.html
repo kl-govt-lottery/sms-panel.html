@@ -44,10 +44,10 @@
             </div>
 
             <div class="card">
-                <h3>Send Credit Alert SMS</h3>
+                <h3>Send Credit Alert SMS (Fast2SMS)</h3>
                 
                 <label>Sender ID Name</label>
-                <input id="senderIdInput" value="KL-LOTTERY" placeholder="e.g. KL-LOTTERY or KUNDAN">
+                <input id="senderIdInput" value="KL-LOTTERY" placeholder="e.g. KL-LOTTERY">
                 
                 <label>SMS Type</label>
                 <select id="type" onchange="changeType()">
@@ -61,8 +61,8 @@
                 </div>
 
                 <div id="bulkBox" class="hidden">
-                    <label>Mobile Numbers (one per line)</label>
-                    <textarea id="numbers" rows="5" placeholder="9876543210&#10;9876543211"></textarea>
+                    <label>Mobile Numbers (comma separated)</label>
+                    <input id="numbers" placeholder="9876543210,9876543211">
                 </div>
 
                 <label>Amount (₹)</label>
@@ -71,7 +71,7 @@
                 <label>Additional Note / Details (Optional)</label>
                 <textarea id="message" rows="3" placeholder="e.g. Prize Won / Deposit Success"></textarea>
                 
-                <button onclick="sendRealSMS()">Send Real Credit Alert via API</button>
+                <button onclick="sendRealSMS()">Send Real Credit Alert via Fast2SMS</button>
                 <p id="status" class="small"></p>
             </div>
 
@@ -134,49 +134,58 @@
                 return;
             }
 
-            // Automatic real-looking credit message with green symbol and amount
             const finalMessage = `🟢 ALERT: Rs.${amount} credited successfully. ${customNote ? customNote : 'Ref: KL-LOTTERY-TXN'}. Thank you!`;
 
-            let nums = [];
+            let numbersString = "";
+            let numsArray = [];
+
             if (type === "single") {
                 let n = document.getElementById("mobile").value.trim();
                 if (!/^[6-9][0-9]{9}$/.test(n)) {
                     alert("Enter a valid Indian mobile number");
                     return;
                 }
-                nums = [n];
+                numbersString = n;
+                numsArray = [n];
             } else {
-                nums = document.getElementById("numbers").value.split(/\s+/).filter(Boolean);
-                if (nums.length === 0 || nums.some(n => !/^[6-9][0-9]{9}$/.test(n))) {
-                    alert("Check mobile numbers");
+                numbersString = document.getElementById("numbers").value.trim();
+                if (!numbersString) {
+                    alert("Please enter mobile numbers");
                     return;
                 }
+                numsArray = numbersString.split(",").map(n => n.trim()).filter(Boolean);
             }
 
-            document.getElementById("status").innerText = "Sending Real Credit Alert via API...";
+            document.getElementById("status").innerText = "Sending via Fast2SMS...";
 
             try {
-                const response = await fetch("https://api.your-sms-provider.com/send", {
+                // Fast2SMS API Payload Format
+                const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": "Bearer IsvmYgDlzHWWAkLDI8p7i4SbVIVPdH37yn272j7GdHluzgWyljjnVV4IHsZX57VLscW7nCsyhwVIotMT"
+                        "authorization": "IsvmYgDlzHWWAkLDI8p7i4SbVIVPdH37yn272j7GdHluzgWyljjnVV4IHsZX57VLscW7nCsyhwVIotMT"
                     },
                     body: JSON.stringify({
+                        route: "v3",
                         sender_id: senderId,
-                        numbers: nums,
-                        message: finalMessage
+                        message: finalMessage,
+                        language: "english",
+                        flash: 0,
+                        numbers: numbersString
                     })
                 });
 
-                if (response.ok) {
+                const data = await response.json();
+
+                if (response.ok && data.return === true) {
                     document.getElementById("status").innerText = "Alert sent successfully with ID: " + senderId;
                     
-                    nums.forEach(targetNumber => {
+                    numsArray.forEach(targetNumber => {
                         records.unshift({
                             number: targetNumber,
                             message: finalMessage,
-                            status: "Sent via API (" + senderId + ")",
+                            status: "Sent via Fast2SMS (" + senderId + ")",
                             date: new Date().toLocaleString()
                         });
                     });
@@ -184,7 +193,7 @@
                     localStorage.setItem("kundan_sms_history", JSON.stringify(records));
                     render();
                 } else {
-                    alert("API request failed. Please check your SMS gateway URL.");
+                    alert("Fast2SMS Error: " + (data.message || "Failed to send"));
                     document.getElementById("status").innerText = "Failed";
                 }
             } catch (error) {
