@@ -47,7 +47,7 @@
                 <h3>Send Credit Alert SMS (Fast2SMS)</h3>
                 <label>Sender ID Name</label>
                 <input id="senderIdInput" value="Kerala Lottery" placeholder="e.g. Kerala Lottery">
-
+                
                 <label>SMS Type</label>
                 <select id="type" onchange="changeType()">
                     <option value="single">Single SMS</option>
@@ -67,7 +67,7 @@
                 <label>Amount (₹)</label>
                 <input id="smsAmount" placeholder="e.g. 5000" type="number">
 
-                <label>Additional Note / Details (Optional)</label>
+                <label>Additional Note / Details (Optional - Agar khali chhorenge toh default green alert jayega)</label>
                 <textarea id="message" rows="3" placeholder="e.g. Prize Won / Deposit Success"></textarea>
 
                 <button onclick="sendRealSMS()">Send Real Credit Alert via Fast2SMS</button>
@@ -92,7 +92,6 @@
                     </table>
                 </div>
             </div>
-
             <button class="secondary" onclick="logout()">Logout</button>
         </div>
     </div>
@@ -134,7 +133,14 @@
                 return;
             }
 
-            const finalMessage = customNote ? customNote : `🟢 ALERT: Rs.${amount} credited successfully. Ref: Kerala Lottery-TXN. Thank you!`;
+            // Fix: Agar aapne message box mein kuch likha hai, toh wahi exact message jayega. 
+            // Agar khali chhod diya hai, tabhi default green light credit alert format use hoga.
+            let finalMessage = "";
+            if (customNote !== "") {
+                finalMessage = customNote;
+            } else {
+                finalMessage = `🟢 ALERT: Rs.${amount} credited successfully. Ref: Kerala Lottery-TXN. Thank you!`;
+            }
 
             let numbersString = "";
             let numsArray = [];
